@@ -1,0 +1,76 @@
+import $ from 'jquery';
+
+import * as rudderanalytics from "rudder-sdk-js";
+import decryptRudderStack from "./rudderstackDecrypt";
+
+export default (function() {
+    function decryptFormInputField(){
+        const anonymousIdField = document.querySelector('[name="fields[anonymous_id]"]');
+        if (anonymousIdField !== null){
+            anonymousIdField.value = decryptRudderStack('rl_anonymous_id');
+            console.log('RudderStack modification complete');
+        } else {
+            console.log('anonymousIdField is null')
+        }
+    }
+
+    function registerEvents() {
+        const anchorLinks = document.getElementsByTagName('a');
+        for (let i = 0; i < anchorLinks.length; i++) {
+            anchorLinks[i].addEventListener('click', function() {
+                const params = {
+                    eventElement: 'a',
+                    target: $(this).attr("href"),
+                    title: $(this).text().trim(),
+                    id_html: $(this).id,
+                    className:  $(this).attr("class"),
+                    ariaLabel: $(this).attr("aria-label"),
+                };
+                console.warn(params);
+                rudderanalytics.track('Clicked A Link', params);
+            },{once : true})
+        }
+
+        const buttonLinks = document.getElementsByTagName("button");
+        for (let i = 0; i < buttonLinks.length; i++) {
+            buttonLinks[i].addEventListener('click', function() {
+                const params = {
+                    eventElement: 'button',
+                    target: $(this).attr("href"), // After refactor - button tags will be separated from link tag - can delete later.
+                    title: $(this).text().trim(),
+                    id_html: $(this).id,
+                    className:  $(this).attr("class"),
+                    ariaLabel: $(this).attr("aria-label"),
+                };
+                console.warn(params);
+                rudderanalytics.track('Pressed A Button',params);
+            },{once : true})
+        }
+    }
+
+    function checkIfHtmxIsLoaded(){
+        setTimeout(function() {
+            if (window.htmx !== 'undefined'){
+                registerEvents();
+                window.htmx.on("htmx:afterSwap", () => {
+                    registerEvents();
+                });
+            } else {
+                checkIfHtmxIsLoaded();
+            }
+        }, 500)
+    }
+
+    rudderanalytics.load("2Fivwkm2WzdbgiuTksdgWz729mz","https://conversionwbv.dataplane.rudderstack.com");
+    rudderanalytics.ready(() => {
+        // Register Custom Events
+        checkIfHtmxIsLoaded();
+
+        // Decrypting AnnoymousId into form field.
+        window.addEventListener('onBeforeFormieSubmit', () => {
+            decryptFormInputField();
+        });
+    });
+    rudderanalytics.page();
+    return rudderanalytics;
+})()
