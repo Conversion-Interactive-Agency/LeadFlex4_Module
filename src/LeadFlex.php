@@ -26,6 +26,7 @@ use craft\errors\ElementNotFoundException;
 use craft\elements\Entry;
 use craft\base\Element;
 use craft\events\ModelEvent;
+use craft\events\RegisterElementExportersEvent;
 use craft\helpers\StringHelper;
 
 class LeadFlex extends Module
