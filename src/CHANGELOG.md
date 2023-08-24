@@ -1,5 +1,7 @@
 # Changelog
 
+## 1.0.3 - 2023-8-24
+- Prepared for Hireline
 
 ## 1.0.2 - 2023-7-27
 

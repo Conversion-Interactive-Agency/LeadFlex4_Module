@@ -10,7 +10,6 @@ use conversionia\leadflex\webhooks\UkgFormie;
 use conversionia\leadflex\exporters\GeosheetExporter;
 
 use conversionia\leadflex\assets\ControlPanel;
-use conversionia\leadflex\twigextensions\ReferrerTwigExtensions;
 
 use craft\feedme\events\FeedProcessEvent;
 use craft\feedme\services\Process;
@@ -57,7 +56,6 @@ class LeadFlex extends Module
                 Craft::$app->view->registerAssetBundle(ControlPanel::class);
                 $this->_registerExporters();
             }
-            $this->_registerTwigExtensions();
         }
 
         $this->_registerFormieIntegrations();
@@ -134,16 +132,5 @@ class LeadFlex extends Module
                 $event->exporters[] = GeosheetExporter::class;
             }
         );
-    }
-
-    private function _registerTwigExtensions()
-    {
-        $extensions = [
-            ReferrerTwigExtensions::class,
-        ];
-
-        foreach ($extensions as $extension) {
-            Craft::$app->view->registerTwigExtension(new $extension);
-        }
     }
 }
