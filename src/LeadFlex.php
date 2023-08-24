@@ -9,16 +9,29 @@ use conversionia\leadflex\webhooks\EbeFormie;
 use conversionia\leadflex\webhooks\UkgFormie;
 use conversionia\leadflex\exporters\GeosheetExporter;
 
-use craft\base\Element;
-use craft\elements\Entry;
-use craft\events\RegisterElementExportersEvent;
+use conversionia\leadflex\assets\ControlPanel;
+use conversionia\leadflex\twigextensions\ReferrerTwigExtensions;
+
+use craft\feedme\events\FeedProcessEvent;
+use craft\feedme\services\Process;
+
 use verbb\formie\events\RegisterIntegrationsEvent;
 use verbb\formie\services\Integrations;
+
 use yii\base\Event;
+use yii\base\Exception;
 use yii\base\Module;
+use yii\base\InvalidConfigException;
+
+use craft\errors\ElementNotFoundException;
+use craft\elements\Entry;
+use craft\base\Element;
+use craft\events\ModelEvent;
+use craft\helpers\StringHelper;
 
 class LeadFlex extends Module
 {
+    public $key = 'jobs';
     /**
      * @var string
      */
@@ -34,13 +47,64 @@ class LeadFlex extends Module
         // Set alias for this module
         Craft::setAlias('@conversionia', __DIR__);
 
+        $request = Craft::$app->getRequest();
+
         // Adjust controller namespace for console requests
-        if (Craft::$app->getRequest()->getIsConsoleRequest()) {
+        if ($request->getIsConsoleRequest()) {
             $this->controllerNamespace = 'conversionia\leadflex\console\controllers';
+        } else {
+            if ($request->getIsCpRequest()) {
+                Craft::$app->view->registerAssetBundle(ControlPanel::class);
+                $this->_registerExporters();
+            }
+            $this->_registerTwigExtensions();
         }
 
         $this->_registerFormieIntegrations();
-        $this->_registerExporters();
+        $this->_registerSaveEntryEvents();
+    }
+
+    private function _registerSaveEntryEvents()
+    {
+        Event::on(Entry::class, Element::EVENT_BEFORE_SAVE, [$this, 'entryBeforeSave']);
+        Event::on(Entry::class, Element::EVENT_AFTER_SAVE, [$this, 'entryAfterSave']);
+    }
+
+    function entryBeforeSave(ModelEvent $event)
+    {
+        $entry = $event->sender;
+        $handle = strtolower($entry->section->handle);
+        $validated = $handle === $this->key;
+
+        if ($validated) {
+            $location = $entry->getFieldValue('location');
+            $isStatewide = empty($location['city']);
+            $event->sender->setFieldValue('statewideJob', $isStatewide);
+        }
+    }
+
+    /**
+     * @throws Exception
+     * @throws \Throwable
+     * @throws ElementNotFoundException
+     */
+    function entryAfterSave(ModelEvent $event)
+    {
+        $entry = $event->sender;
+        $handle = strtolower($entry->section->handle);
+        $validated = $handle === $this->key && $entry->firstSave;
+
+        if ($validated) {
+            $id = $entry->id;
+
+            $defaultJob = $entry->getFieldValue('defaultJobDescription')->one();
+            $titleText = !empty($entry->adHeadline) ? $entry->adHeadline : (!empty($defaultJob->adHeadline) ? $defaultJob->adHeadline : $defaultJob->title);
+            $title = StringHelper::slugify($titleText);
+
+            $entry->slug = $title . "-" . $id;
+            $entry->firstSave = false;
+            Craft::$app->elements->saveElement($entry);
+        }
     }
 
     /**
@@ -70,5 +134,16 @@ class LeadFlex extends Module
                 $event->exporters[] = GeosheetExporter::class;
             }
         );
+    }
+
+    private function _registerTwigExtensions()
+    {
+        $extensions = [
+            ReferrerTwigExtensions::class,
+        ];
+
+        foreach ($extensions as $extension) {
+            Craft::$app->view->registerTwigExtension(new $extension);
+        }
     }
 }

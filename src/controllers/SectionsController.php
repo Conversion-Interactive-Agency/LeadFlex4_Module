@@ -23,10 +23,18 @@ use yii\web\Response;
 class SectionsController extends Controller
 {
 
-    // Constants
+    const GQL_TOKEN_NAME = 'Hireline';
+
+    // Protected Properties
     // =========================================================================
 
-    const GQL_TOKEN_NAME = 'Hireline';
+    //    protected $allowAnonymous = [
+    //        'get-csrf',
+    //        'get-gql-token',
+    //        'get-field-options',
+    //    ];
+
+    /* todo - remove anonymous access; Delete $allowAnonymous = true; Uncomment protected $allowAnonymous above */
 
     // Protected Properties
     // =========================================================================
@@ -85,5 +93,10 @@ class SectionsController extends Controller
         }
 
         return $this->asJson($result);
+    }
+
+    public function actionSpeak(): Response
+    {
+        return $this->asJson('Hello World');;
     }
 }
