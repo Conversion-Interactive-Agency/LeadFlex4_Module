@@ -52,7 +52,27 @@ class LeadFlex extends Module
             }
         }
         $this->_registerFormieIntegrations();
+        Event::on(Process::class, Process::EVENT_STEP_BEFORE_PARSE_CONTENT, [$this, 'beforeParseContent']);
         Event::on(Entry::class, Element::EVENT_BEFORE_SAVE, [$this, 'entryBeforeSave']);
+    }
+
+    public function beforeParseContent(FeedProcessEvent $event)
+    {
+        $entry = $event->element;
+        if(!$entry instanceof Entry){
+            return false;
+        }
+
+        $handle = strtolower($entry->section->handle);
+        if ($handle == $this->key) {
+            if (is_null($entry->slug)) {
+                $event->element->slug = ElementHelper::tempSlug();
+            } else {
+                unset($event->feed['fieldMapping']['slug']);
+            }
+        }
+
+        return $event;
     }
 
     function entryBeforeSave(ModelEvent $event)
