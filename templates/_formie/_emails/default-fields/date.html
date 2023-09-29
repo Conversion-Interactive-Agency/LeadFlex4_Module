@@ -1,0 +1,7 @@
+<p>
+    {% if not (options.hideName ?? false) %}
+        <strong>{{ field.name | t }}</strong><br>
+    {% endif %}
+
+    {{ field.getValueAsString(value, submission) ?: ('No response.' | t('formie')) }}
+</p>
