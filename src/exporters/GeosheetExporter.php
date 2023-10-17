@@ -29,6 +29,8 @@ class GeosheetExporter extends ElementExporter
             // Eager loaded defaultJobDescription
             $fallback = $element->defaultJobDescription[0] ?? '';
 
+            $lastUpdatedBy = $element->currentRevision ->creator->email ?? $element->author->email ?? 'No Author Assigned (Bulk Edit or FeedMe)' ;
+
             $campaign = !empty($element->assignedCampaign[0])
                 ? $element->assignedCampaign[0]->title
                 : '';
@@ -54,6 +56,8 @@ class GeosheetExporter extends ElementExporter
                 'Custom UTM Tag' => $element->customUtmTag ?? '',
                 'External Job ID' => $element->externalJobId ?? '',
                 'Pay' => $element->pay ?? $fallback->pay ?? '',
+                'Last Updated' => $element->dateUpdated->format('Y-m-d H:i:s'),
+                'Last Updated By' => $lastUpdatedBy ?? '',
             ];
         }
 

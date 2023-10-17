@@ -31,7 +31,7 @@ use craft\helpers\StringHelper;
 
 class LeadFlex extends Module
 {
-    public $key = 'jobs';
+    public $section = 'jobs';
     /**
      * @var string
      */
@@ -52,15 +52,21 @@ class LeadFlex extends Module
         // Adjust controller namespace for console requests
         if ($request->getIsConsoleRequest()) {
             $this->controllerNamespace = 'conversionia\leadflex\console\controllers';
-        } else {
-            if ($request->getIsCpRequest()) {
-                Craft::$app->view->registerAssetBundle(ControlPanel::class);
-                $this->_registerExporters();
-            }
+            $this->_registerConsoleEventListeners();
+        }
+
+        if ($request->getIsCpRequest()) {
+            Craft::$app->view->registerAssetBundle(ControlPanel::class);
+            $this->_registerExporters();
         }
 
         $this->_registerFormieIntegrations();
         $this->_registerSaveEntryEvents();
+    }
+
+    private function _registerConsoleEventListeners()
+    {
+        Event::on(Process::class, Process::EVENT_STEP_BEFORE_PARSE_CONTENT, [$this, 'beforeParseContent']);
     }
 
     private function _registerSaveEntryEvents()
@@ -69,17 +75,39 @@ class LeadFlex extends Module
         Event::on(Entry::class, Element::EVENT_AFTER_SAVE, [$this, 'entryAfterSave']);
     }
 
+    /**
+     * @throws InvalidConfigException
+     * Removing the slug field from the feed mapping for the jobs section
+     */
+    public function beforeParseContent(FeedProcessEvent $event)
+    {
+        $entry = $event->element;
+        if (!$this->isJobEntry($entry)) {
+            return false;
+        }
+        $isExistingElement = $entry->id;
+        if ($isExistingElement) {
+            unset($event->feed['fieldMapping']['title']);
+            unset($event->feed['fieldMapping']['slug']);
+            return $event;
+        }
+    }
+
     function entryBeforeSave(ModelEvent $event)
     {
         $entry = $event->sender;
-        $handle = strtolower($entry->section->handle);
-        $validated = $handle === $this->key;
-
-        if ($validated) {
-            $location = $entry->getFieldValue('location');
-            $isStatewide = empty($location['city']);
-            $event->sender->setFieldValue('statewideJob', $isStatewide);
+        $fields = ['location','statewideJob'];
+        if (!$this->doFieldsExists($entry, $fields)) {
+            return;
         }
+
+        if(!$entry->enabled){
+            $this->isDisabled($entry);
+        }
+
+        $location = $entry->getFieldValue('location');
+        $isStatewide = empty($location['city']);
+        $event->sender->setFieldValue('statewideJob', $isStatewide);
     }
 
     /**
@@ -90,18 +118,19 @@ class LeadFlex extends Module
     function entryAfterSave(ModelEvent $event)
     {
         $entry = $event->sender;
-        $handle = strtolower($entry->section->handle);
-        $validated = $handle === $this->key && $entry->firstSave;
+        $fields = ['protectedSlug','defaultJobDescription','protectedSlug'];
+        if (!$this->doFieldsExists($entry, $fields)) {
+            return;
+        }
 
-        if ($validated) {
-            $id = $entry->id;
-
-            $defaultJob = $entry->getFieldValue('defaultJobDescription')->one();
-            $titleText = !empty($entry->adHeadline) ? $entry->adHeadline : (!empty($defaultJob->adHeadline) ? $defaultJob->adHeadline : $defaultJob->title);
+        $defaultJob = $entry->getFieldValue('defaultJobDescription')->one();
+        $isProtected = $entry->getFieldValue('protectedSlug');
+        if (!empty($defaultJob) && !$isProtected) {
+            $titleText = !empty($entry->adHeadline) ? $entry->adHeadline
+                : (!empty($defaultJob->adHeadline) ? $defaultJob->adHeadline : $defaultJob->title);
             $title = StringHelper::slugify($titleText);
-
-            $entry->slug = $title . "-" . $id;
-            $entry->firstSave = false;
+            $entry->slug = $title . "-" . $entry->id;
+            $entry->setFieldValue('protectedSlug', true);
             Craft::$app->elements->saveElement($entry);
         }
     }
@@ -133,5 +162,47 @@ class LeadFlex extends Module
                 $event->exporters[] = GeosheetExporter::class;
             }
         );
+    }
+
+    // Check if a field exists
+    private function doFieldsExists($entry, $fieldHandle): bool
+    {
+        if (!$this->isJobEntry($entry)) {
+            return false;
+        }
+
+        $hasAllFields = true;
+
+        if (!is_array($fieldHandle)){
+            $fieldHandle = [$fieldHandle];
+        }
+
+        $entryFields = $entry->getType()->getFieldLayout()->getFields();
+
+        // transform the array of Field objects into an array of field handles for convenience
+        $entryFieldHandles = array_column($entryFields, 'handle');
+
+        // check entry has fields
+        foreach ($fieldHandle as $handle) {
+            $entryHasMyCustomField = in_array($handle, $entryFieldHandles);
+            if (!$entryHasMyCustomField) {
+                $hasAllFields = false;
+            }
+        }
+
+        return $hasAllFields;
+    }
+
+    private function isJobEntry($entry):bool
+    {
+        if(!$entry instanceof Entry){
+            return false;
+        }
+        return $this->section == $entry->section->handle;
+    }
+
+    private function isDisabled($entry){
+        $entry->setFieldValue('advertiseJob', "false");
+        $entry->setFieldValue('assignedCampaign', '');
     }
 }
