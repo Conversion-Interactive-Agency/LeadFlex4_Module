@@ -7,6 +7,7 @@ use conversionia\leadflex\webhooks\DriverReachFormie;
 use conversionia\leadflex\webhooks\TenstreetFormie;
 use conversionia\leadflex\webhooks\EbeFormie;
 use conversionia\leadflex\webhooks\UkgFormie;
+use conversionia\leadflex\webhooks\StarsCampusFormie;
 use conversionia\leadflex\exporters\GeosheetExporter;
 
 use conversionia\leadflex\assets\ControlPanel;
@@ -148,6 +149,7 @@ class LeadFlex extends Module
                 $event->webhooks[] = DriverReachFormie::class;
                 $event->webhooks[] = EbeFormie::class;
                 $event->webhooks[] = UkgFormie::class;
+                $event->webhooks[] = StarsCampusFormie::class;
             }
         );
     }
