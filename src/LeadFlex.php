@@ -97,13 +97,15 @@ class LeadFlex extends Module
     function entryBeforeSave(ModelEvent $event)
     {
         $entry = $event->sender;
-        $fields = ['location','statewideJob'];
+        $fields = ['location','statewideJob','advertiseJob','assignedCampaign'];
         if (!$this->doFieldsExists($entry, $fields)) {
             return;
         }
 
-        if(!$entry->enabled){
-            $this->isDisabled($entry);
+        $assignedCampaign = $entry->getFieldValue('assignedCampaign')->one();
+        if(!$entry->enabled || is_null($assignedCampaign)){
+            $event->sender->setFieldValue('advertiseJob', 'false');
+            $event->sender->setFieldValue('assignedCampaign', []);
         }
 
         $location = $entry->getFieldValue('location');
@@ -201,10 +203,5 @@ class LeadFlex extends Module
             return false;
         }
         return $this->section == $entry->section->handle;
-    }
-
-    private function isDisabled($entry){
-        $entry->setFieldValue('advertiseJob', "false");
-        $entry->setFieldValue('assignedCampaign', '');
     }
 }
