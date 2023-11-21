@@ -61,7 +61,8 @@ class BusinessLogicTwigExtensions extends AbstractExtension implements GlobalsIn
             'utmCampaign'   =>  $this->buildCookieValue('utm_campaign','cookie-monster-utm-campaign', "lf_direct"),
             'utmContent'    =>  $this->buildCookieValue('utm_content','cookie-monster-utm-content', null),
             'ebeSource'     =>  $this->buildCookieValue('source','cookie-monster-ebe-source', 'LeadFlex Direct/Organic'),
-            'ebeSourceId'   =>  $this->buildCookieValue('sourceId','cookie-monster-ebe-source-id', '230')
+            'ebeSourceId'   =>  $this->buildCookieValue('sourceId','cookie-monster-ebe-source-id', '230'),
+            'hm_id'         =>  $this->buildCookieValue('hm_id','hm_id', null)
         ];
     }
 }
