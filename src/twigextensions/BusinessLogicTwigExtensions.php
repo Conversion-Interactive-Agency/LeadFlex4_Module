@@ -43,6 +43,9 @@ class BusinessLogicTwigExtensions extends AbstractExtension implements GlobalsIn
             $value = $requestCookiesValue;
         } else {
             $value = $defaultCookieValue;
+            if (is_null($value)) {
+                return null;
+            }
             $cookie = $this->buildCookie($name, $value, $duration);
             Craft::$app->getResponse()->getCookies()->add($cookie);
             $responseCookies->add($cookie);
