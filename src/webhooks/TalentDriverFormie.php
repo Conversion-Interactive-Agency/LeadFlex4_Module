@@ -114,7 +114,24 @@ class TalentDriverFormie extends Webhook
             $data['firstName'] == 'test' ||
             $data['lastName'] == 'test';
         $company = !$setAsTestSubmission ? $data['companyName'] : 'test';
-        $GcpBucket = explode('.',App::env('PRODUCTION_DOMAIN'))[0] ?? 'dev';
+        $gcpBucket = explode('.',App::env('PRODUCTION_DOMAIN'))[0] ?? 'dev';
+
+        // Match Source to the appropriate integer
+        $sourceInt = 17;
+        $sourceStr = $data['referrerValue'];
+
+        $sourceArray = [
+            'google' => 14,
+            'indeed' => 15,
+            'social' => 16,
+        ];
+
+        foreach ($sourceArray as $key => $value) {
+            if (stripos($sourceStr, $key) !== false) {
+                $sourceInt = $value;
+                break; // exit the loop once a match is found
+            }
+        }
 
         // Compile JSON data
         $json = [
@@ -135,7 +152,7 @@ class TalentDriverFormie extends Webhook
                 "experience"=> (int)$data['experience'],
                 "accidents"=> (int)$data['accidents'],
                 "violations"=> (int)$data['movingViolations'],
-                "source"=> 5, // 5 - JobsInTrucks
+                "source"=> $sourceInt,
             ],
             'form'=>[
                 'id' => $form->id,
@@ -153,7 +170,7 @@ class TalentDriverFormie extends Webhook
                 'domain' => App::env('PRODUCTION_DOMAIN'),
             ],
             'gcp' => [
-                'bucket' => $GcpBucket,
+                'bucket' => $gcpBucket,
             ],
         ];
 
