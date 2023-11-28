@@ -169,7 +169,7 @@ class FormsController extends Controller
             // Walk through options array
             array_walk($field->options, function (&$opt, $key) use ($field) {
                 // If option is blank
-                if (!($opt['value'] ?? false)) {
+                if (!($opt['value'] || $opt['value'] === '0')) {
                     // Remove it
                     unset($field->options[$key]);
                 }

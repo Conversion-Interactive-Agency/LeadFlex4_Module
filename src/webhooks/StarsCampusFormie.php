@@ -119,6 +119,7 @@ class StarsCampusFormie extends Webhook
                 'InternetEmailAddress' => trim($data['email']),
                 'PrimaryPhone' => $this->_cleanPhone($data['cellPhone']),
                 'OptIn' => ($data['optIn'] ?? null || 'No' ?: 'No' ),
+                'BestTimeToContact' => trim($data['bestTimeToContact']),
             ],
         ];
 
