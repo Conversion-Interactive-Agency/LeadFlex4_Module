@@ -68,6 +68,7 @@ class TalentDriverFormie extends Webhook
         
         $data = [];
 
+        // Talent Driver required fields => Formie fields submissions object mapping
         $requiredFieldsMapping = [
             'firstName' => 'body.given_name',
             'lastName' => 'body.family_name',
@@ -103,8 +104,12 @@ class TalentDriverFormie extends Webhook
 
         if (!empty($requiredFieldsMapping)) {
             $message = 'Missing required fields: ' . implode(', ', array_keys($requiredFieldsMapping));
-            Craft::error($message, 'application');
-            return [];
+            Craft::warning($message, 'application');
+
+            // Add required fields to applicants post data
+            foreach ($requiredFieldsMapping as $key => $value) {
+                $data[$key] = -1;
+            }
         }
 
         // Test and fallbacks for development
