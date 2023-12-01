@@ -168,6 +168,7 @@ class TalentDriverFormie extends Webhook
                 'id' => $submission->id,
                 'webPageUrl' => $data['webPageUrl'],
                 'referrer' => trim($data['referrerValue']),
+                'postingSource' => 'leadflex'
             ],
             'company' => [
                 'id' => trim($data['atsCompanyId']),
