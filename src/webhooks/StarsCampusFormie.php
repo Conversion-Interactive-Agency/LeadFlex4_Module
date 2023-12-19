@@ -119,7 +119,6 @@ class StarsCampusFormie extends Webhook
                 'InternetEmailAddress' => trim($data['email']),
                 'PrimaryPhone' => $this->_cleanPhone($data['cellPhone']),
                 'OptIn' => ($data['optIn'] ?? null || 'No' ?: 'No' ),
-                'BestTimeToContact' => trim($data['bestTimeToContact']),
             ],
         ];
 
@@ -134,7 +133,7 @@ class StarsCampusFormie extends Webhook
             // If data point was not used, add to JSON data
             if (!in_array($handle, $usedFields)) {
                 $label = ($labels[$handle] ?? $handle);
-                $json[$label] = $value;
+                $json[$handle] = $value;
             }
         }
 
