@@ -132,7 +132,6 @@ class StarsCampusFormie extends Webhook
         foreach ($data as $handle => $value) {
             // If data point was not used, add to JSON data
             if (!in_array($handle, $usedFields)) {
-                $label = ($labels[$handle] ?? $handle);
                 $json[$handle] = $value;
             }
         }
