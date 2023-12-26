@@ -111,7 +111,7 @@ class StarsCampusFormie extends Webhook
                 'CompanyId' => trim($data['atsCompanyId']),
                 'DriverId' => $driverId,
                 'AppReferrer' => trim($data['referrerValue']),
-                'LeadOriginCode' => trim($data['referrerValue']),
+                'LeadOriginCode' => "LF",
                 'GivenName' => trim($data['firstName']),
                 'FamilyName' => trim($data['lastName']),
                 'Municipality' => trim($data['city']),
